@@ -8,16 +8,10 @@ describe("Lexer", () => {
     expect(out).toMatchInlineSnapshot(`
       [
         Token {
-          "content": "",
-          "end": 0,
-          "start": 0,
-          "type": "html",
-        },
-        Token {
           "content": "<%=",
-          "end": 0,
+          "end": 3,
           "start": 0,
-          "type": "open_p",
+          "type": "open",
         },
         Token {
           "content": " Time.zone.now ",
@@ -27,8 +21,8 @@ describe("Lexer", () => {
         },
         Token {
           "content": "%>",
-          "end": 18,
-          "start": 3,
+          "end": 20,
+          "start": 18,
           "type": "close",
         },
       ]
@@ -37,7 +31,7 @@ describe("Lexer", () => {
 
   it("parses multi line", () => {
     const input = `<div>
-    <% if true then %>
+    <% if true %>
       <%= render Component.new %>
     <% end %>    
     
@@ -56,69 +50,69 @@ describe("Lexer", () => {
         },
         Token {
           "content": "<%",
-          "end": 10,
-          "start": 0,
+          "end": 12,
+          "start": 10,
           "type": "open",
         },
         Token {
-          "content": " if true then ",
-          "end": 26,
+          "content": " if true ",
+          "end": 21,
           "start": 12,
           "type": "ruby",
         },
         Token {
           "content": "%>",
-          "end": 26,
-          "start": 12,
+          "end": 23,
+          "start": 21,
           "type": "close",
         },
         Token {
           "content": "
             ",
-          "end": 35,
-          "start": 28,
+          "end": 30,
+          "start": 23,
           "type": "html",
         },
         Token {
           "content": "<%=",
-          "end": 35,
-          "start": 28,
-          "type": "open_p",
+          "end": 33,
+          "start": 30,
+          "type": "open",
         },
         Token {
           "content": " render Component.new ",
-          "end": 60,
-          "start": 38,
+          "end": 55,
+          "start": 33,
           "type": "ruby",
         },
         Token {
           "content": "%>",
-          "end": 60,
-          "start": 38,
+          "end": 57,
+          "start": 55,
           "type": "close",
         },
         Token {
           "content": "
           ",
-          "end": 67,
-          "start": 62,
+          "end": 62,
+          "start": 57,
           "type": "html",
         },
         Token {
           "content": "<%",
-          "end": 67,
+          "end": 64,
           "start": 62,
           "type": "open",
         },
         Token {
           "content": " end ",
-          "end": 74,
-          "start": 69,
+          "end": 69,
+          "start": 64,
           "type": "ruby",
         },
         Token {
           "content": "%>",
-          "end": 74,
+          "end": 71,
           "start": 69,
           "type": "close",
         },
@@ -126,8 +120,8 @@ describe("Lexer", () => {
           "content": "    
           
           </div>",
-          "end": 96,
-          "start": 76,
+          "end": 91,
+          "start": 71,
           "type": "html",
         },
       ]

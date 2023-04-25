@@ -1,3 +1,5 @@
+import { is_alphanumeric, is_whitespace } from "./utils";
+
 enum ERB {
   open = "<%",
   open_print = "<%=",
@@ -5,7 +7,7 @@ enum ERB {
   close = "%>",
 }
 
-type TokenType = "open" | "open_p" | "open_p_e" | "close" | "html" | "ruby";
+type TokenType = "open" | "close" | "html" | "ruby";
 
 export class Token {
   type: TokenType;
@@ -33,16 +35,38 @@ export class Token {
   loc() {
     return `${this.start}:${this.end}`;
   }
+
+  is_print() {
+    return this.content.endsWith("=");
+  }
+
+  is_escaped() {
+    return this.content.endsWith("==");
+  }
+
+  is_trimmed() {
+    switch (this.type) {
+      case "open": {
+        return this.content.endsWith("-");
+      }
+      case "close": {
+        return this.content.startsWith("-");
+      }
+      default:
+        return false;
+    }
+  }
 }
 
 type StateFn = (() => void) | null;
 
 export class Lexer {
-  private start = 0;
-  private pos = 0;
   text: string;
   tokens: Token[] = [];
   state: StateFn = this.lex_html;
+  private start = 0;
+  private pos = 0;
+  private advance_stack: number[] = [];
 
   constructor(input: string) {
     this.text = input;
@@ -58,120 +82,115 @@ export class Lexer {
 
   private advance(by?: number) {
     if (!by) {
+      this.advance_stack.push(1);
       this.pos++;
     } else {
+      this.advance_stack.push(by);
       this.pos += by;
     }
   }
 
-  private next_is_open_pe() {
-    return this.text.slice(this.pos, this.pos + 4) == ERB.open_print_escape;
+  private peek(n = 1) {
+    return this.text[this.pos + n];
   }
 
-  private next_is_open_p() {
-    return this.text.slice(this.pos, this.pos + 3) == ERB.open_print;
+  private peek_slice(n = 1) {
+    return this.text.slice(this.pos, this.pos + n);
+  }
+
+  private back() {
+    if (this.pos > 0 && this.advance_stack.length) {
+      this.pos -= this.advance_stack.pop()!;
+    }
   }
 
   private next_is_open() {
     return this.text.slice(this.pos, this.pos + 2) == ERB.open;
   }
 
-  private next_is_end = () => this.pos + 1 > this.text.length;
+  private next_is_eof = () => this.pos + 1 > this.text.length;
 
-  private emit_html = () =>
-    this.tokens.push(
-      new Token({
-        type: "html",
-        content: this.text.slice(this.start, this.pos),
-        start: this.start,
-        pos: this.pos,
-      })
-    );
+  private emit(type: Token["type"]) {
+    if (this.pos > this.start) {
+      this.tokens.push(
+        new Token({
+          type,
+          content: this.text.slice(this.start, this.pos),
+          start: this.start,
+          pos: this.pos,
+        })
+      );
+    }
+  }
 
-  private lex_open() {
+  private lex_ruby() {
     this.start = this.pos;
-    while (!(this.text.slice(this.pos, this.pos + 2) == ERB.close)) {
+
+    L: while (true) {
+      if (
+        this.peek_slice(2) === ERB.close ||
+        (this.pos + 3 < this.text.length && this.peek_slice(3) === "-%>")
+      ) {
+        break L;
+      }
+
       this.advance();
     }
 
-    this.tokens.push(
-      new Token({
-        type: "ruby",
-        content: this.text.slice(this.start, this.pos),
-        start: this.start,
-        pos: this.pos,
-      })
-    );
+    this.emit("ruby");
     this.state = this.lex_close;
   }
 
   private lex_close() {
-    this.tokens.push(
-      new Token({
-        type: "close",
-        content: ERB.close,
-        start: this.start,
-        pos: this.pos,
-      })
-    );
-    this.advance(2);
+    this.start = this.pos;
+    let span = 2;
+
+    while (
+      !this.next_is_eof &&
+      !is_alphanumeric(this.peek(span)) &&
+      !is_whitespace(this.peek(span))
+    ) {
+      span++;
+    }
+
+    this.advance(span);
+
+    this.emit("close");
 
     this.state = this.lex_html;
+  }
+
+  private lex_open() {
+    this.start = this.pos;
+    let span = 2;
+
+    while (
+      !is_alphanumeric(this.peek(span)) &&
+      !is_whitespace(this.peek(span))
+    ) {
+      span++;
+    }
+
+    this.advance(span);
+
+    this.emit("open");
+
+    this.state = this.lex_ruby;
   }
 
   private lex_html() {
     this.start = this.pos;
 
     L: while (true) {
-      if (this.next_is_open_pe()) {
-        this.emit_html();
-        this.advance(3);
-
-        this.tokens.push(
-          new Token({
-            type: "open_p_e",
-            content: ERB.open_print_escape,
-            start: this.start,
-            pos: this.pos,
-          })
-        );
-
-        this.state = this.lex_open;
-        break L;
-      }
-      if (this.next_is_open_p()) {
-        this.emit_html();
-        this.tokens.push(
-          new Token({
-            type: "open_p",
-            content: ERB.open_print,
-            start: this.start,
-            pos: this.pos,
-          })
-        );
-        this.advance(3);
-        this.state = this.lex_open;
-        break L;
-      }
       if (this.next_is_open()) {
-        this.emit_html();
-        this.tokens.push(
-          new Token({
-            type: "open",
-            content: ERB.open,
-            start: this.start,
-            pos: this.pos,
-          })
-        );
-        this.advance(2);
+        this.emit("html");
+
         this.state = this.lex_open;
         break L;
       }
 
-      if (this.next_is_end()) {
-        if (this.pos > this.start) {
-          this.emit_html();
-        }
+      if (this.next_is_eof()) {
+        this.emit("html");
 
         this.state = null;
         break L;
