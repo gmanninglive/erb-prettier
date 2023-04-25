@@ -5,9 +5,10 @@ enum ERB {
   open_print = "<%=",
   open_print_escape = "<%==",
   close = "%>",
+  close_trimmed = "-%>",
 }
 
-type TokenType = "open" | "close" | "html" | "ruby";
+export type TokenType = "open" | "close" | "html" | "ruby";
 
 export class Token {
   type: TokenType;
@@ -19,17 +20,17 @@ export class Token {
     type,
     content,
     start,
-    pos,
+    end,
   }: {
     type: TokenType;
     content: string;
     start: number;
-    pos: number;
+    end: number;
   }) {
     this.content = content;
     this.type = type;
     this.start = start;
-    this.end = pos;
+    this.end = end;
   }
 
   loc() {
@@ -37,24 +38,19 @@ export class Token {
   }
 
   is_print() {
-    return this.content.endsWith("=");
+    return this.type === "open" && this.content.endsWith("=");
   }
 
   is_escaped() {
-    return this.content.endsWith("==");
+    return this.type === "open" && this.content.endsWith("==");
   }
 
   is_trimmed() {
-    switch (this.type) {
-      case "open": {
-        return this.content.endsWith("-");
-      }
-      case "close": {
-        return this.content.startsWith("-");
-      }
-      default:
-        return false;
-    }
+    return this.content === ERB.close_trimmed;
+  }
+
+  is_comment() {
+    return this.type === "open" && this.content.endsWith("#");
   }
 }
 
@@ -104,11 +100,9 @@ export class Lexer {
     }
   }
 
-  private next_is_open() {
-    return this.text.slice(this.pos, this.pos + 2) == ERB.open;
+  private is_eof(position: number) {
+    return position + 1 > this.text.length;
   }
-
-  private next_is_eof = () => this.pos + 1 > this.text.length;
 
   private emit(type: Token["type"]) {
     if (this.pos > this.start) {
@@ -117,7 +111,7 @@ export class Lexer {
           type,
           content: this.text.slice(this.start, this.pos),
           start: this.start,
-          pos: this.pos,
+          end: this.pos,
         })
       );
     }
@@ -129,7 +123,7 @@ export class Lexer {
     L: while (true) {
       if (
         this.peek_slice(2) === ERB.close ||
-        (this.pos + 3 < this.text.length && this.peek_slice(3) === "-%>")
+        (this.is_eof(this.pos + 3) && this.peek_slice(3) === "-%>")
       ) {
         break L;
       }
@@ -146,7 +140,7 @@ export class Lexer {
     let span = 2;
 
     while (
-      !this.next_is_eof &&
+      !this.is_eof(this.pos + span) &&
       !is_alphanumeric(this.peek(span)) &&
       !is_whitespace(this.peek(span))
     ) {
@@ -182,14 +176,14 @@ export class Lexer {
     this.start = this.pos;
 
     L: while (true) {
-      if (this.next_is_open()) {
+      if (this.peek_slice(2) === ERB.open) {
         this.emit("html");
 
         this.state = this.lex_open;
         break L;
       }
 
-      if (this.next_is_eof()) {
+      if (this.is_eof(this.pos)) {
         this.emit("html");
 
         this.state = null;
