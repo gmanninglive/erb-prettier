@@ -36,3 +36,7 @@ const WHITESPACE = new Set([
 export function is_whitespace(char: string) {
   return WHITESPACE.has(char);
 }
+
+export function is_quote(char: string) {
+  return char == '"' || char === "'";
+}

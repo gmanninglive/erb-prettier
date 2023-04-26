@@ -1,20 +1,37 @@
-import { is_alphanumeric, is_whitespace } from "./utils";
+import { is_alphanumeric, is_quote, is_whitespace } from "./utils";
 
-enum ERB {
-  open = "<%",
-  open_print = "<%=",
-  open_print_escape = "<%==",
-  close = "%>",
-  close_trimmed = "-%>",
+export enum ERBKind {
+  OPEN = "<%",
+  OPEN_PRINT = "<%=",
+  OPEN_PRINT_ESCAPE = "<%==",
+  CLOSE = "%>",
+  CLOSE_TRIMMED = "-%>",
+  IF = "if",
+  ELSE = "else",
+  ELSE_IF = "elsif",
+  END = "end",
+  DO = "do",
+  STATEMENT = "__statement__",
 }
 
-export type TokenType = "open" | "close" | "html" | "ruby";
+export enum HTMLKind {
+  OPEN = "<",
+  CLOSE = "</",
+  SELF_CLOSING = "/>",
+}
+
+export type TokenType = "erb" | "html" | "text";
+
+type Start = number;
+type End = number;
+export type Loc = `${Start}:${End}`;
 
 export class Token {
   type: TokenType;
   content: string;
   start: number;
   end: number;
+  kind: "open" | "close" | "self_closing" | "statement" | "text";
 
   constructor({
     type,
@@ -31,26 +48,58 @@ export class Token {
     this.type = type;
     this.start = start;
     this.end = end;
+
+    this.kind = this.get_kind();
   }
 
-  loc() {
+  loc(): Loc {
     return `${this.start}:${this.end}`;
   }
 
+  is_close() {
+    return (
+      this.content.startsWith(HTMLKind.CLOSE) ||
+      this.content.endsWith(ERBKind.CLOSE)
+    );
+  }
+
+  is_self_closing() {
+    return this.content.startsWith(HTMLKind.SELF_CLOSING) || this.is_print();
+  }
+
   is_print() {
-    return this.type === "open" && this.content.endsWith("=");
+    return this.type === "erb" && this.content.endsWith("=");
   }
 
   is_escaped() {
-    return this.type === "open" && this.content.endsWith("==");
+    return this.type === "erb" && this.content.endsWith("==");
   }
 
   is_trimmed() {
-    return this.content === ERB.close_trimmed;
+    return this.content === ERBKind.CLOSE_TRIMMED;
   }
 
   is_comment() {
-    return this.type === "open" && this.content.endsWith("#");
+    return this.type === "erb" && this.content.endsWith("#");
+  }
+
+  private get_kind() {
+    if (this.is_self_closing()) {
+      return "self_closing";
+    }
+    if (this.is_close()) {
+      return "close";
+    }
+    if (this.type === "html" && !this.is_close()) {
+      return "open";
+    }
+    if (this.type === "erb" && this.content === ERBKind.OPEN) {
+      return "open";
+    }
+    if (this.type === "erb") {
+      return "statement";
+    }
+    return "text";
   }
 }
 
@@ -76,6 +125,10 @@ export class Lexer {
     return this.tokens;
   }
 
+  private debug() {
+    console.debug({ start: this.start, pos: this.pos, state: this.state });
+  }
+
   private advance(by?: number) {
     if (!by) {
       this.advance_stack.push(1);
@@ -84,6 +137,10 @@ export class Lexer {
       this.advance_stack.push(by);
       this.pos += by;
     }
+  }
+
+  private current() {
+    return this.text[this.pos];
   }
 
   private peek(n = 1) {
@@ -122,7 +179,7 @@ export class Lexer {
 
     L: while (true) {
       if (
-        this.peek_slice(2) === ERB.close ||
+        this.peek_slice(2) === ERBKind.CLOSE ||
         (this.is_eof(this.pos + 3) && this.peek_slice(3) === "-%>")
       ) {
         break L;
@@ -131,7 +188,7 @@ export class Lexer {
       this.advance();
     }
 
-    this.emit("ruby");
+    this.emit("erb");
     this.state = this.lex_close;
   }
 
@@ -149,9 +206,9 @@ export class Lexer {
 
     this.advance(span);
 
-    this.emit("close");
+    this.emit("erb");
 
-    this.state = this.lex_html;
+    this.state = this.lex_text;
   }
 
   private lex_open() {
@@ -167,7 +224,7 @@ export class Lexer {
 
     this.advance(span);
 
-    this.emit("open");
+    this.emit("erb");
 
     this.state = this.lex_ruby;
   }
@@ -176,15 +233,57 @@ export class Lexer {
     this.start = this.pos;
 
     L: while (true) {
-      if (this.peek_slice(2) === ERB.open) {
+      // as this lexer is currently only intended for code formatting,
+      // we treat erb within html tag attributes as part of the html token
+      // if (this.peek_slice(2) === ERB.open) {
+      //   this.emit("html");
+
+      //   this.state = this.lex_open;
+      //   break L;
+      // }
+
+      if (this.peek() === ">" && !is_quote(this.peek(2))) {
+        this.advance(2);
         this.emit("html");
+
+        this.state = this.lex_text;
+        break L;
+      }
+
+      if (this.is_eof(this.pos)) {
+        this.emit("html");
+
+        this.state = null;
+        break L;
+      }
+
+      this.advance();
+    }
+  }
+
+  private lex_text() {
+    this.start = this.pos;
+
+    L: while (true) {
+      if (
+        this.current() === "<" &&
+        (is_alphanumeric(this.peek()) || this.peek() === "/")
+      ) {
+        this.emit("text");
+
+        this.state = this.lex_html;
+        break L;
+      }
+
+      if (this.peek_slice(2) === ERBKind.OPEN) {
+        this.emit("text");
 
         this.state = this.lex_open;
         break L;
       }
 
       if (this.is_eof(this.pos)) {
-        this.emit("html");
+        this.emit("text");
 
         this.state = null;
         break L;

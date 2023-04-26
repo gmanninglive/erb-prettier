@@ -8,22 +8,11 @@ describe("Lexer", () => {
     expect(out).toMatchInlineSnapshot(`
       [
         Token {
-          "content": "<%=",
-          "end": 3,
-          "start": 0,
-          "type": "open",
-        },
-        Token {
-          "content": " Time.zone.now ",
-          "end": 18,
-          "start": 3,
-          "type": "ruby",
-        },
-        Token {
-          "content": "%>",
+          "content": "<%= Time.zone.now %>",
           "end": 20,
-          "start": 18,
-          "type": "close",
+          "kind": "close",
+          "start": 0,
+          "type": "html",
         },
       ]
     `);
@@ -42,86 +31,138 @@ describe("Lexer", () => {
     expect(out).toMatchInlineSnapshot(`
       [
         Token {
-          "content": "<div>
-          ",
-          "end": 10,
+          "content": "<div>",
+          "end": 5,
+          "kind": "open",
           "start": 0,
           "type": "html",
         },
         Token {
+          "content": "
+          ",
+          "end": 10,
+          "kind": "text",
+          "start": 5,
+          "type": "text",
+        },
+        Token {
           "content": "<%",
           "end": 12,
+          "kind": "open",
           "start": 10,
-          "type": "open",
+          "type": "erb",
         },
         Token {
           "content": " if true ",
           "end": 21,
+          "kind": "statement",
           "start": 12,
-          "type": "ruby",
+          "type": "erb",
         },
         Token {
           "content": "%>",
           "end": 23,
+          "kind": "close",
           "start": 21,
-          "type": "close",
+          "type": "erb",
         },
         Token {
           "content": "
             ",
           "end": 30,
+          "kind": "text",
           "start": 23,
-          "type": "html",
+          "type": "text",
         },
         Token {
           "content": "<%=",
           "end": 33,
+          "kind": "self_closing",
           "start": 30,
-          "type": "open",
+          "type": "erb",
         },
         Token {
           "content": " render Component.new ",
           "end": 55,
+          "kind": "statement",
           "start": 33,
-          "type": "ruby",
+          "type": "erb",
         },
         Token {
           "content": "%>",
           "end": 57,
+          "kind": "close",
           "start": 55,
-          "type": "close",
+          "type": "erb",
         },
         Token {
           "content": "
           ",
           "end": 62,
+          "kind": "text",
           "start": 57,
-          "type": "html",
+          "type": "text",
         },
         Token {
           "content": "<%",
           "end": 64,
+          "kind": "open",
           "start": 62,
-          "type": "open",
+          "type": "erb",
         },
         Token {
           "content": " end ",
           "end": 69,
+          "kind": "statement",
           "start": 64,
-          "type": "ruby",
+          "type": "erb",
         },
         Token {
           "content": "%>",
           "end": 71,
+          "kind": "close",
           "start": 69,
-          "type": "close",
+          "type": "erb",
         },
         Token {
           "content": "    
           
-          </div>",
-          "end": 91,
+          ",
+          "end": 85,
+          "kind": "text",
           "start": 71,
+          "type": "text",
+        },
+        Token {
+          "content": "</div>",
+          "end": 91,
+          "kind": "close",
+          "start": 85,
+          "type": "html",
+        },
+      ]
+    `);
+  });
+
+  it("doesn't extract erb from html tag attributes", () => {
+    const input = `<div class="<%= true ? 'test-true' : 'test-false' %>"></div>`;
+
+    const out = new Lexer(input).lex();
+
+    expect(out).toMatchInlineSnapshot(`
+      [
+        Token {
+          "content": "<div class="<%= true ? 'test-true' : 'test-false' %>">",
+          "end": 54,
+          "kind": "open",
+          "start": 0,
+          "type": "html",
+        },
+        Token {
+          "content": "</div>",
+          "end": 60,
+          "kind": "close",
+          "start": 54,
           "type": "html",
         },
       ]
