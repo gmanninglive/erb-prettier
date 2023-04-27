@@ -1,62 +1,82 @@
-import { TokenType, Token, Loc, Lexer } from ".";
+import { Token } from ".";
 
-class ERBAst {
+export class ERBAst {
   stack: Token[] = [];
-  nodes: ERBNode[] = [];
+  program: ERBNode;
+  nodes: Map<number, ERBNode>;
 
   constructor(stack: Token[]) {
     this.stack = stack;
+    this.nodes = new Map();
+    this.nodes.set(
+      -1,
+      new ERBNode({ parent_id: -1, node_id: -1, token: null })
+    );
+    this.program = this.get_node(-1)!;
+
     this.to_ast();
   }
 
-  get_node(loc: Loc) {
-    return this.stack.filter((t) => t.loc() === loc);
+  get_node(id: number) {
+    return this.nodes.get(id);
   }
 
-  // <div>
-  //   <div>
-  //     <%= test %>
-  //   </div>
-  // </div>
-
   private to_ast() {
+    let parent = this.get_node(-1)!;
     this.stack.forEach((token, idx) => {
-      if (token.type === "html") {
-        this.nodes.push(new ERBNode({ token }));
+      const node = new ERBNode({
+        token,
+        node_id: idx,
+        parent_id: parent.node_id,
+      });
+
+      this.nodes.set(idx, node);
+
+      switch (token.kind) {
+        case "close": {
+          parent.append_child(node);
+
+          parent = this.get_node(parent.parent_id) || this.get_node(-1)!;
+          break;
+        }
+        case "open": {
+          if (token.type === "html") {
+            parent.append_child(node);
+          }
+
+          parent = this.nodes.get(idx)!;
+        }
+        default: {
+          parent.append_child(node);
+          break;
+        }
       }
     });
   }
 }
 
-class ERBNode {
+export class ERBNode {
   opening_tag: Token | null = null;
-  parent: Token | null;
+  node_id: number;
+  parent_id: number;
   token: Token | null;
+  children: ERBNode[] = [];
 
   constructor({
-    parent = null,
+    parent_id,
+    node_id,
     token,
   }: {
-    parent?: Token | null;
-    token: Token;
+    node_id: number;
+    parent_id: number;
+    token: Token | null;
   }) {
-    this.parent = parent;
+    this.parent_id = parent_id;
+    this.node_id = node_id;
     this.token = token;
   }
 
-  get children(): Token[] {
-    return this.children;
-  }
-
-  append_child(t: Token) {
-    this.children.push(t);
+  append_child(n: ERBNode) {
+    this.children.push(n);
   }
 }
-
-const tokens = new Lexer("<%= render Component.new %>").lex();
-
-const ast = new ERBAst(tokens);
-
-const node = new ERBNode({
-  token: new Token({ type: "erb", content: "test", start: 10, end: 14 }),
-});

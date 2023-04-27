@@ -8,11 +8,25 @@ describe("Lexer", () => {
     expect(out).toMatchInlineSnapshot(`
       [
         Token {
-          "content": "<%= Time.zone.now %>",
+          "content": "<%=",
+          "end": 3,
+          "kind": "self_closing",
+          "start": 0,
+          "type": "erb",
+        },
+        Token {
+          "content": " Time.zone.now ",
+          "end": 18,
+          "kind": "statement",
+          "start": 3,
+          "type": "erb",
+        },
+        Token {
+          "content": "%>",
           "end": 20,
           "kind": "close",
-          "start": 0,
-          "type": "html",
+          "start": 18,
+          "type": "erb",
         },
       ]
     `);
@@ -152,11 +166,39 @@ describe("Lexer", () => {
     expect(out).toMatchInlineSnapshot(`
       [
         Token {
-          "content": "<div class="<%= true ? 'test-true' : 'test-false' %>">",
-          "end": 54,
+          "content": "<div class="",
+          "end": 12,
           "kind": "open",
           "start": 0,
           "type": "html",
+        },
+        Token {
+          "content": "<%=",
+          "end": 15,
+          "kind": "self_closing",
+          "start": 12,
+          "type": "erb",
+        },
+        Token {
+          "content": " true ? 'test-true' : 'test-false' ",
+          "end": 50,
+          "kind": "statement",
+          "start": 15,
+          "type": "erb",
+        },
+        Token {
+          "content": "%>",
+          "end": 52,
+          "kind": "close",
+          "start": 50,
+          "type": "erb",
+        },
+        Token {
+          "content": "">",
+          "end": 54,
+          "kind": "text",
+          "start": 52,
+          "type": "text",
         },
         Token {
           "content": "</div>",

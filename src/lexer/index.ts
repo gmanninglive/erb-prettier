@@ -235,12 +235,12 @@ export class Lexer {
     L: while (true) {
       // as this lexer is currently only intended for code formatting,
       // we treat erb within html tag attributes as part of the html token
-      // if (this.peek_slice(2) === ERB.open) {
-      //   this.emit("html");
+      if (!is_quote(this.current()) && this.peek_slice(2) === ERBKind.OPEN) {
+        this.emit("html");
 
-      //   this.state = this.lex_open;
-      //   break L;
-      // }
+        this.state = this.lex_open;
+        break L;
+      }
 
       if (this.peek() === ">" && !is_quote(this.peek(2))) {
         this.advance(2);
