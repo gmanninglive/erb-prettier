@@ -1,6 +1,6 @@
 import { ERBKind, Token } from "./lexer";
 
-const opening_idens = ["if", "do", "else", "unless"];
+const opening_idens = ["if", "do", "unless"];
 
 export class ERBAst {
   stack: Token[];

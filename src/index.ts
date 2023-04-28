@@ -1,36 +1,60 @@
 import { AstPath, format } from "prettier";
-import parser, { Token } from "./parser/lexer";
+import { ERBAst, ERBNode, Parser } from "./parser";
 
-// TODO: work out the best solution for formatting seperate languages
-async function print(path: AstPath<Token[]>) {
-  let output = [];
+function print(path: AstPath<ERBAst>) {
+  let html_string = "";
+  let erb_nodes: Map<string, ERBNode> = new Map();
 
-  for (const token of path.stack[0]) {
-    switch (token.type) {
-      case "open": {
-        output.push(token.content);
-        break;
+  const { program } = path.stack[0];
+
+  const walk = (node: ERBNode) => {
+    for (const n of node.children) {
+      switch (n.token?.type) {
+        case "html": {
+          html_string += n.token.content;
+          break;
+        }
+        case "erb": {
+          const iden = `<erb-node-${n.id} />`;
+
+          html_string += iden;
+          erb_nodes.set(iden, n);
+          break;
+        }
+        case "text": {
+          html_string += n.token.content;
+        }
       }
-      case "close": {
-        output.push(token.content);
-        break;
-      }
-      case "html": {
-        output.push(format(token.content, { parser: "html" }));
-      }
-      case "ruby": {
-        output.push(format(token.content, { parser: "ruby" }));
+
+      walk(n);
+
+      if (n.token?.type === "html") {
+        html_string += n?.closing_token?.content || "";
       }
     }
-  }
+  };
 
-  return output.join();
+  walk(program);
+
+  let formatted_html = format(html_string, { parser: "html" });
+
+  return [...erb_nodes].reduce((prev, [key, node]) => {
+    return prev.replace(
+      key,
+      `${node.opening_token?.content}${node.token?.content}${node.closing_token?.content}`
+    );
+  }, formatted_html);
 }
 
 const printers = {
   "erb-ast": {
     print,
   },
+};
+
+const parser = {
+  parse: (input: string) => new Parser(input).parse(),
+  astFormat: "erb-ast",
 };
 
 module.exports = {

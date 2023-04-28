@@ -297,8 +297,3 @@ export class Lexer {
     }
   }
 }
-
-export default {
-  parse: (input: string) => new Lexer(input).lex(),
-  astFormat: "erb-ast",
-};

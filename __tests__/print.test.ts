@@ -1,7 +1,7 @@
 import { format } from "prettier";
 
 describe("multiline", () => {
-  xit("does", () => {
+  it("does", () => {
     const input = `<div>
     <%= if true %>
       <%= render Component.new %>
@@ -15,18 +15,27 @@ describe("multiline", () => {
       plugins: ["erb-prettier"],
     });
 
-    console.log(output);
+    expect(output).toMatchInlineSnapshot(`
+      "<div>
+        <%= if true %>
+        <%= render Component.new %>
+        <% end %>
+      </div>
+      "
+    `);
   });
 
-  xit("single line", async () => {
+  it("single line", async () => {
     const input = `<%= render Component.new %>`;
-
-    const output = await format(input, {
+    const output = format(input, {
       parser: "erb",
       pluginSearchDirs: [".."],
       plugins: ["erb-prettier"],
     });
 
-    console.log(output);
+    expect(output).toMatchInlineSnapshot(`
+      "<%= render Component.new %>
+      "
+    `);
   });
 });
