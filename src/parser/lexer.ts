@@ -157,6 +157,10 @@ export class Lexer {
     }
   }
 
+  private is_start() {
+    return this.pos === 0;
+  }
+
   private is_eof(position: number) {
     return position + 1 > this.text.length;
   }
@@ -235,7 +239,7 @@ export class Lexer {
     L: while (true) {
       // as this lexer is currently only intended for code formatting,
       // we treat erb within html tag attributes as part of the html token
-      if (!is_quote(this.current()) && this.peek_slice(2) === ERBKind.OPEN) {
+      if (this.peek_slice(2) === ERBKind.OPEN && !is_quote(this.peek(-1))) {
         this.emit("html");
 
         this.state = this.lex_open;

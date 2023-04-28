@@ -1,5 +1,5 @@
 import { AstPath, format } from "prettier";
-import parser, { Token } from "./lexer";
+import parser, { Token } from "./parser/lexer";
 
 // TODO: work out the best solution for formatting seperate languages
 async function print(path: AstPath<Token[]>) {

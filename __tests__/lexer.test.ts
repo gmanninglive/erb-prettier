@@ -1,4 +1,4 @@
-import { Lexer } from "../src/lexer";
+import { Lexer } from "../src/parser/lexer";
 
 describe("Lexer", () => {
   it("parses single line", () => {
@@ -166,39 +166,11 @@ describe("Lexer", () => {
     expect(out).toMatchInlineSnapshot(`
       [
         Token {
-          "content": "<div class="",
-          "end": 12,
+          "content": "<div class="<%= true ? 'test-true' : 'test-false' %>">",
+          "end": 54,
           "kind": "open",
           "start": 0,
           "type": "html",
-        },
-        Token {
-          "content": "<%=",
-          "end": 15,
-          "kind": "self_closing",
-          "start": 12,
-          "type": "erb",
-        },
-        Token {
-          "content": " true ? 'test-true' : 'test-false' ",
-          "end": 50,
-          "kind": "statement",
-          "start": 15,
-          "type": "erb",
-        },
-        Token {
-          "content": "%>",
-          "end": 52,
-          "kind": "close",
-          "start": 50,
-          "type": "erb",
-        },
-        Token {
-          "content": "">",
-          "end": 54,
-          "kind": "text",
-          "start": 52,
-          "type": "text",
         },
         Token {
           "content": "</div>",
