@@ -8,14 +8,13 @@ export class Parser {
   input: string;
   tokens: Token[];
   lexer: Lexer;
-  ast?: ERBAst;
+  ast: ERBAst;
 
   constructor(input: string) {
     this.input = input;
-
-    this.lexer = new Lexer(input);
-
+    this.lexer = new Lexer(this.input);
     this.tokens = this.lexer.lex();
+    this.ast = this.parse();
   }
 
   parse() {
@@ -25,6 +24,7 @@ export class Parser {
   }
 }
 
+/* prints the ast back to an unformatted string, intended only for regression testing of the parser */
 export function print_to_erb(ast: ERBAst) {
   let buffer = "";
   const callback = (node: ERBNode) => {

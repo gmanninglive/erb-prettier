@@ -64,7 +64,7 @@ const printers = {
 };
 
 const parser: PrettierParser = {
-  parse: (input: string) => new Parser(input).parse(),
+  parse: (input: string) => new Parser(input).ast,
   astFormat: "erb-ast",
   locStart(node: ERBNode) {
     return node.start;

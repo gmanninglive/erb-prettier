@@ -4,7 +4,7 @@ describe("Parser: Parses and prints e2e", () => {
   it("parses single line", () => {
     const input = `<%= Time.zone.now %>'`;
 
-    const ast = new Parser(input).parse();
+    const { ast } = new Parser(input);
     const out = print_to_erb(ast);
 
     expect(out).toEqual(input);
@@ -19,7 +19,7 @@ describe("Parser: Parses and prints e2e", () => {
     
     </div>`;
 
-    const ast = new Parser(input).parse();
+    const { ast } = new Parser(input);
     const out = print_to_erb(ast);
 
     expect(out).toEqual(input);
@@ -36,7 +36,7 @@ describe("Parser: Parses and prints e2e", () => {
   it("parses erb ignoring inline attribute", () => {
     const input = `<div class="<%= true ? 'test-true' : 'test-false' %>"></div>`;
 
-    const ast = new Parser(input).parse();
+    const { ast } = new Parser(input);
     const out = print_to_erb(ast);
 
     expect(out).toEqual(input);
