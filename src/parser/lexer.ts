@@ -157,10 +157,6 @@ export class Lexer {
     }
   }
 
-  private is_start() {
-    return this.pos === 0;
-  }
-
   private is_eof(position: number) {
     return position + 1 > this.text.length;
   }
