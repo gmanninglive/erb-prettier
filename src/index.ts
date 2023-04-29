@@ -4,7 +4,7 @@ import {
   ParserOptions,
   Parser as PrettierParser,
 } from "prettier";
-import { ERBAst, ProgramNode, ERBNode, Parser } from "./parser";
+import { ERBAst, ProgramNode, ERBNode, Parser, ERBKind } from "./parser";
 
 function print(path: AstPath<ERBAst>, { tabWidth }: ParserOptions) {
   let html_string = "";
@@ -21,7 +21,15 @@ function print(path: AstPath<ERBAst>, { tabWidth }: ParserOptions) {
           break;
         }
         case "erb": {
-          const iden = `<erb-node-${n.id} />`;
+          if (n.content.trim() === ERBKind.END) {
+            break;
+          }
+
+          let iden = `<node-${n.id}>`;
+
+          if (n.kind === "self_closing" || n.kind === "comment") {
+            iden = `<node-${n.id} />`;
+          }
 
           html_string += iden;
           erb_nodes.set(iden, n);
@@ -34,8 +42,21 @@ function print(path: AstPath<ERBAst>, { tabWidth }: ParserOptions) {
 
       walk(n);
 
+      // add closing html tag
       if (n.type === "html") {
-        html_string += n.closing_token?.content || "";
+        html_string += n.closed_by?.content || "";
+      }
+
+      // add <% end %> tag placeholder
+      if (
+        n.type === "erb" &&
+        n.kind !== "self_closing" &&
+        n.kind !== "comment"
+      ) {
+        const iden = `</node-${n.id}>`;
+        html_string += iden;
+
+        erb_nodes.set(iden, n);
       }
     }
   };
@@ -44,16 +65,30 @@ function print(path: AstPath<ERBAst>, { tabWidth }: ParserOptions) {
 
   const formatted_html = format(html_string, { parser: "html" });
 
-  function print_erb(node: ERBNode) {
-    const start = node.opening_token?.content;
-    const end = node.closing_token?.content;
-
+  function print_erb(node: ERBNode, is_end_tag: boolean) {
     if (node.kind === "comment") {
       return node.content;
     }
 
-    const indent = " ".repeat((node.depth + 2) * tabWidth);
+    // print end tag
+    if (is_end_tag) {
+      const start = node.closed_by?.expression_start?.content;
+      const end = node.closed_by?.expression_end?.content;
+      const expression = node.closed_by?.content;
 
+      if (!start || !end || !expression) {
+        console.error(
+          `Error printing file, expected end received undefined;\n\nfor: ${node.content}, start: ${node.start}, end: ${node.end}`
+        );
+        return "";
+      }
+      return start + expression.trim() + end;
+    }
+
+    const start = node.expression_start?.content;
+    const end = node.expression_end?.content;
+
+    const indent = " ".repeat((node.depth + 2) * tabWidth);
     const expression = node.content
       // replace whitespace after comma with newline and indent matching depth within tree
       .replace(/,[\s\n\r]*/g, ",\n".concat(indent))
@@ -61,17 +96,12 @@ function print(path: AstPath<ERBAst>, { tabWidth }: ParserOptions) {
       .trim();
 
     const formatted = `${start} ${expression} ${end}`;
-    const parent = ast.get_parent(node);
 
-    if (parent.type === "erb") {
-      const indent = " ".repeat(tabWidth);
-      return indent + formatted;
-    }
     return formatted;
   }
 
   return [...erb_nodes].reduce((prev, [key, node]) => {
-    return prev.replace(key, print_erb(node));
+    return prev.replace(key, print_erb(node, key.startsWith("</")));
   }, formatted_html);
 }
 

@@ -34,9 +34,9 @@ export function print_to_erb(ast: ERBAst) {
 
     switch (node.type) {
       case "erb": {
-        buffer += node.opening_token?.content;
+        buffer += node.expression_start?.content;
         buffer += node.content;
-        buffer += node.closing_token?.content;
+        buffer += node.expression_end?.content;
         break;
       }
       default: {
@@ -46,8 +46,12 @@ export function print_to_erb(ast: ERBAst) {
 
     node.children.forEach(callback);
 
-    if (node.type === "html") {
-      buffer += node?.closing_token?.content || "";
+    if (node.kind !== "parent") return;
+
+    if (node.type === "erb") {
+      buffer += `${node.closed_by?.expression_start?.content}${node.closed_by?.content}${node.closed_by?.expression_end?.content}`;
+    } else {
+      buffer += node.closed_by?.content || "";
     }
   };
 

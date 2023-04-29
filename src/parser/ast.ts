@@ -49,41 +49,48 @@ export class ERBAst {
       this.node_map.set(idx, node);
 
       switch (token.kind) {
-        case "close": {
-          if (token.type === "html") {
-            parent.closing_token = token;
-
-            // Move up one level
-            parent = this.get_parent(parent);
-            depth--;
+        case "parent_close": {
+          if (token.type === "erb") {
+            node.expression_start = this.get_token(idx - 1);
+            node.expression_end = this.get_token(idx + 1);
           }
+
+          parent.closed_by = node;
+
+          // Move up one level
+          parent = this.get_parent(parent);
+          depth--;
 
           break;
         }
-        case "open": {
+        case "parent": {
           if (token.type === "html") {
             parent.append_child(node);
+            parent = node;
+            depth++;
+
+            break;
+          }
+
+          node.expression_start = this.get_token(idx - 1);
+          node.expression_end = this.get_token(idx + 1);
+
+          parent.append_child(node);
+          if (opening_idens.some((s) => token.content.includes(s))) {
+            // Move down one level
             parent = node;
             depth++;
           }
 
           break;
         }
-        case "statement": {
-          node.opening_token = this.get_token(idx - 1);
-          node.closing_token = this.get_token(idx + 1);
-
-          if (token.content.trim() === ERBKind.END) {
-            // Move up one level
-            parent = this.get_parent(parent);
-            node.parent_id = parent.id;
-            depth--;
-
-            parent.append_child(node);
-            break;
+        case "self_closing": {
+          if (token.type === "erb") {
+            node.expression_start = this.get_token(idx - 1);
+            node.expression_end = this.get_token(idx + 1);
           }
-
           parent.append_child(node);
+
           if (opening_idens.some((s) => token.content.includes(s))) {
             // Move down one level
             parent = node;
@@ -110,8 +117,10 @@ export class ProgramNode {
   depth: number;
   start: number;
   end: number;
-  opening_token?: Token | null = null;
-  closing_token?: Token | null = null;
+  expression_start?: Token | null = null;
+  expression_end?: Token | null = null;
+  closed_by?: ERBNode | null = null;
+  has_end_tag = false;
   type = "program";
 
   constructor({

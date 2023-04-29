@@ -48,8 +48,8 @@ exports[`e2e formats template files: _header.html.erb 1`] = `
 exports[`e2e formats template files: _new.html.erb 1`] = `
 "<%# <!-- /users/sign_in --> %>
 <% content_for :extra_tags do %>
-<meta name="robots" content="noindex, nofollow" />
-<% end %>
+  <meta name="robots" content="noindex, nofollow" />
+<%end%>
 
 <%# WIP— Really important comment that will definetely be removed,
 once the work has been carried out %>
@@ -65,12 +65,13 @@ once the work has been carried out %>
       </h2>
 
       <% if devise_mapping.registerable? && controller_name != 'registrations' %>
-      <p class="mt-2 text-sm text-center text-gray-600">Or</p>
-        <%= link_to 'Create Account',
-            new_registration_path(resource_name),
-            class: 'font-medium text-orange-primary hover:text-orange-secondary' %>
-
-      <% end %>
+        <p class="mt-2 text-sm text-center text-gray-600">
+          Or
+          <%= link_to 'Create Account',
+              new_registration_path(resource_name),
+              class: 'font-medium text-orange-primary hover:text-orange-secondary' %>
+        </p>
+      <%end%>
     </div>
     <%= render 'new' %>
   </div>

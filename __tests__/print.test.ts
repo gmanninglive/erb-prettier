@@ -3,7 +3,7 @@ import { format } from "prettier";
 describe("multiline", () => {
   it("does", () => {
     const input = `<div>
-    <%= if true %>
+    <% if true %>
       <%= render Component.new %>
     <% end %>    
     
@@ -17,9 +17,9 @@ describe("multiline", () => {
 
     expect(output).toMatchInlineSnapshot(`
       "<div>
-        <%= if true %>
+        <% if true %>
           <%= render Component.new %>
-        <% end %>
+        <%end%>
       </div>
       "
     `);

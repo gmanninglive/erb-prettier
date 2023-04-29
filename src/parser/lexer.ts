@@ -1,10 +1,10 @@
 import { is_alphanumeric, is_quote, is_whitespace } from "./utils";
 
 export enum ERBKind {
-  OPEN = "<%",
-  OPEN_PRINT = "<%=",
-  OPEN_PRINT_ESCAPE = "<%==",
-  OPEN_COMMENT = "<%#",
+  START = "<%",
+  START_PRINT = "<%=",
+  START_PRINT_ESCAPE = "<%==",
+  START_COMMENT = "<%#",
   CLOSE = "%>",
   CLOSE_TRIMMED = "-%>",
   IF = "if",
@@ -51,7 +51,14 @@ export class Token {
   content: string;
   start: number;
   end: number;
-  kind: "open" | "close" | "self_closing" | "statement" | "text" | "comment";
+  kind:
+    | "parent"
+    | "parent_close"
+    | "self_closing"
+    | "erb_start"
+    | "erb_close"
+    | "text"
+    | "comment";
 
   constructor({
     type,
@@ -79,7 +86,7 @@ export class Token {
   is_close() {
     return (
       this.content.startsWith(HTMLKind.CLOSE) ||
-      this.content.endsWith(ERBKind.CLOSE)
+      this.content.trim() === ERBKind.END
     );
   }
 
@@ -91,7 +98,7 @@ export class Token {
       );
     }
 
-    return this.is_print();
+    return false;
   }
 
   is_print() {
@@ -110,26 +117,30 @@ export class Token {
     return this.type === "erb" && this.content.endsWith("#");
   }
 
-  private get_kind() {
-    if (this.content.startsWith(ERBKind.OPEN_COMMENT)) {
+  private get_kind(): typeof this.kind {
+    if (this.content.startsWith(ERBKind.START_COMMENT)) {
       return "comment";
     }
     if (this.is_self_closing()) {
       return "self_closing";
     }
     if (this.is_close()) {
-      return "close";
+      return "parent_close";
     }
-    if (this.type === "html" && !this.is_close()) {
-      return "open";
+    if (this.type === "erb" && this.content.startsWith(ERBKind.START)) {
+      return "erb_start";
     }
-    if (this.type === "erb" && this.content === ERBKind.OPEN) {
-      return "open";
+    if (this.type === "erb" && this.content.endsWith(ERBKind.CLOSE)) {
+      return "erb_close";
     }
-    if (this.type === "erb") {
-      return "statement";
+    if (this.type !== "text") {
+      return "parent";
     }
     return "text";
+  }
+
+  toString() {
+    return this.content;
   }
 }
 
@@ -152,6 +163,7 @@ export class Lexer {
       this.state();
     }
 
+    this.set_token_kind();
     return this.tokens;
   }
 
@@ -245,7 +257,7 @@ export class Lexer {
     this.start = this.pos;
 
     // consume any erb comments as a single token
-    if (this.peek_slice(3) === ERBKind.OPEN_COMMENT) {
+    if (this.peek_slice(3) === ERBKind.START_COMMENT) {
       while (this.peek_slice(2) !== ERBKind.CLOSE) {
         this.advance();
       }
@@ -279,7 +291,7 @@ export class Lexer {
     L: while (true) {
       // as this lexer is currently only intended for code formatting,
       // we treat erb within html tag attributes as part of the html token
-      if (this.peek_slice(2) === ERBKind.OPEN && !is_quote(this.peek(-1))) {
+      if (this.peek_slice(2) === ERBKind.START && !is_quote(this.peek(-1))) {
         this.emit("html");
 
         this.state = this.lex_open;
@@ -319,7 +331,7 @@ export class Lexer {
         break L;
       }
 
-      if (this.peek_slice(2) === ERBKind.OPEN) {
+      if (this.peek_slice(2) === ERBKind.START) {
         this.emit("text");
 
         this.state = this.lex_open;
@@ -335,5 +347,17 @@ export class Lexer {
 
       this.advance();
     }
+  }
+
+  private set_token_kind() {
+    this.tokens.forEach((token, idx) => {
+      if (token.type === "erb" && token.is_print()) {
+        const expression = this.tokens[idx + 1];
+
+        if (expression.type === "erb" && expression.kind === "parent") {
+          expression.kind = "self_closing";
+        }
+      }
+    });
   }
 }
