@@ -19,6 +19,7 @@ describe("Ast", () => {
               "start": 18,
               "type": "erb",
             },
+            "depth": 0,
             "id": 1,
             "opening_token": Token {
               "content": "<%=",
@@ -38,6 +39,7 @@ describe("Ast", () => {
           },
         ],
         "closing_token": null,
+        "depth": 0,
         "id": -1,
         "opening_token": null,
         "parent_id": -1,
@@ -65,6 +67,7 @@ describe("Ast", () => {
               ERBNode {
                 "children": [],
                 "closing_token": null,
+                "depth": 1,
                 "id": 1,
                 "opening_token": null,
                 "parent_id": 0,
@@ -82,6 +85,7 @@ describe("Ast", () => {
                   ERBNode {
                     "children": [],
                     "closing_token": null,
+                    "depth": 2,
                     "id": 5,
                     "opening_token": null,
                     "parent_id": 3,
@@ -103,6 +107,7 @@ describe("Ast", () => {
                       "start": 55,
                       "type": "erb",
                     },
+                    "depth": 2,
                     "id": 7,
                     "opening_token": Token {
                       "content": "<%=",
@@ -123,6 +128,7 @@ describe("Ast", () => {
                   ERBNode {
                     "children": [],
                     "closing_token": null,
+                    "depth": 2,
                     "id": 9,
                     "opening_token": null,
                     "parent_id": 3,
@@ -144,6 +150,7 @@ describe("Ast", () => {
                       "start": 69,
                       "type": "erb",
                     },
+                    "depth": 2,
                     "id": 11,
                     "opening_token": Token {
                       "content": "<%",
@@ -169,6 +176,7 @@ describe("Ast", () => {
                   "start": 21,
                   "type": "erb",
                 },
+                "depth": 1,
                 "id": 3,
                 "opening_token": Token {
                   "content": "<%",
@@ -189,6 +197,7 @@ describe("Ast", () => {
               ERBNode {
                 "children": [],
                 "closing_token": null,
+                "depth": 3,
                 "id": 13,
                 "opening_token": null,
                 "parent_id": 0,
@@ -210,6 +219,7 @@ describe("Ast", () => {
               "start": 85,
               "type": "html",
             },
+            "depth": 0,
             "id": 0,
             "opening_token": null,
             "parent_id": -1,
@@ -223,6 +233,7 @@ describe("Ast", () => {
           },
         ],
         "closing_token": null,
+        "depth": 0,
         "id": -1,
         "opening_token": null,
         "parent_id": -1,
@@ -245,6 +256,7 @@ describe("Ast", () => {
               ERBNode {
                 "children": [],
                 "closing_token": null,
+                "depth": 1,
                 "id": 1,
                 "opening_token": null,
                 "parent_id": 0,
@@ -264,6 +276,7 @@ describe("Ast", () => {
               "start": 58,
               "type": "html",
             },
+            "depth": 0,
             "id": 0,
             "opening_token": null,
             "parent_id": -1,
@@ -277,6 +290,7 @@ describe("Ast", () => {
           },
         ],
         "closing_token": null,
+        "depth": 0,
         "id": -1,
         "opening_token": null,
         "parent_id": -1,

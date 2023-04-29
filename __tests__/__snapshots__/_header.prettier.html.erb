@@ -14,16 +14,28 @@
   <div
     class="mt-3 inline-flex gap-x-0.5 overflow-x-auto overflow-y-hidden whitespace-nowrap lg:overflow-visible"
   >
-    <%= render partial: 'header_tab',
-        locals: { link_name: "All", link_path: customers_orders_path(query: { state: 'all' }), this_state: 'all' } %>
+    <div>
+      <div>
+        <%= render partial: 'header_tab',
+            locals: { link_name: "All",
+            link_path: customers_orders_path(query: { state: 'all' }),
+            this_state: 'all' } %>
+      </div>
+    </div>
 
     <%= render partial: 'header_tab',
-        locals: { link_name: "Enquiries/Booked", link_path: customers_orders_path(query: { state: 'booked' }), this_state: 'booked' } %>
+        locals: { link_name: "Enquiries/Booked",
+        link_path: customers_orders_path(query: { state: 'booked' }),
+        this_state: 'booked' } %>
 
     <%= render partial: 'header_tab',
-        locals: { link_name: "Active Orders", link_path: customers_orders_path(query: { state: 'active' }), this_state: 'active' } %>
+        locals: { link_name: "Active Orders",
+        link_path: customers_orders_path(query: { state: 'active' }),
+        this_state: 'active' } %>
 
     <%= render partial: 'header_tab',
-        locals: { link_name: "Completed Orders", link_path: customers_orders_path(query: { state: 'completed' }), this_state: 'completed' } %>
+        locals: { link_name: "Completed Orders",
+        link_path: customers_orders_path(query: { state: 'completed' }),
+        this_state: 'completed' } %>
   </div>
 </header>

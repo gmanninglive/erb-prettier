@@ -10,7 +10,12 @@ export class ERBAst {
   constructor(stack: Token[]) {
     this.stack = stack;
     this.node_map = new Map();
-    this.program = new ERBNode({ parent_id: -1, id: -1, token: null });
+    this.program = new ERBNode({
+      parent_id: -1,
+      id: -1,
+      token: null,
+      depth: 0,
+    });
     this.node_map.set(-1, this.program);
 
     this.to_ast();
@@ -30,11 +35,13 @@ export class ERBAst {
 
   private to_ast() {
     let parent: ERBNode = this.program;
+    let depth = 0;
     this.stack.forEach((token, idx) => {
       const node = new ERBNode({
         token,
         id: idx,
         parent_id: parent.id,
+        depth: depth,
       });
 
       this.node_map.set(idx, node);
@@ -46,6 +53,7 @@ export class ERBAst {
 
             // Move up one level
             parent = this.get_parent(parent);
+            depth--;
           }
 
           break;
@@ -54,6 +62,7 @@ export class ERBAst {
           if (token.type === "html") {
             parent.append_child(node);
             parent = node;
+            depth++;
           }
 
           break;
@@ -67,11 +76,13 @@ export class ERBAst {
           if (opening_idens.some((s) => token.content.includes(s))) {
             // Move down one level
             parent = node;
+            depth++;
           }
 
           if (token.content.trim() === ERBKind.END) {
             // Move up one level
             parent = this.get_parent(parent);
+            depth++;
           }
         }
         default: {
@@ -92,19 +103,23 @@ export class ERBNode {
   parent_id: number;
   token: Token | null;
   children: ERBNode[] = [];
+  depth: number;
 
   constructor({
     parent_id,
     id,
     token,
+    depth,
   }: {
     id: number;
     parent_id: number;
     token: Token | null;
+    depth: number;
   }) {
     this.parent_id = parent_id;
     this.id = id;
     this.token = token;
+    this.depth = depth;
   }
 
   append_child(n: ERBNode) {
