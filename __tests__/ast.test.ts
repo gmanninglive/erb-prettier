@@ -6,9 +6,9 @@ describe("Ast", () => {
     const input = `<%= Time.zone.now %>`;
 
     const tokens = new Lexer(input).lex();
-    const out = new ERBAst(tokens);
+    const out = new ERBAst(tokens, input);
     expect(out.program).toMatchInlineSnapshot(`
-      ERBNode {
+      ProgramNode {
         "children": [
           ERBNode {
             "children": [],
@@ -19,8 +19,11 @@ describe("Ast", () => {
               "start": 18,
               "type": "erb",
             },
+            "content": " Time.zone.now ",
             "depth": 0,
+            "end": 18,
             "id": 1,
+            "kind": "statement",
             "opening_token": Token {
               "content": "<%=",
               "end": 3,
@@ -29,21 +32,18 @@ describe("Ast", () => {
               "type": "erb",
             },
             "parent_id": -1,
-            "token": Token {
-              "content": " Time.zone.now ",
-              "end": 18,
-              "kind": "statement",
-              "start": 3,
-              "type": "erb",
-            },
+            "start": 3,
+            "type": "erb",
           },
         ],
         "closing_token": null,
         "depth": 0,
+        "end": 19,
         "id": -1,
         "opening_token": null,
         "parent_id": -1,
-        "token": null,
+        "start": 0,
+        "type": "program",
       }
     `);
   });
@@ -57,46 +57,42 @@ describe("Ast", () => {
     </div>`;
 
     const tokens = new Lexer(input).lex();
-    const out = new ERBAst(tokens);
+    const out = new ERBAst(tokens, input);
 
     expect(out.program).toMatchInlineSnapshot(`
-      ERBNode {
+      ProgramNode {
         "children": [
           ERBNode {
             "children": [
               ERBNode {
                 "children": [],
                 "closing_token": null,
+                "content": "
+          ",
                 "depth": 1,
+                "end": 10,
                 "id": 1,
+                "kind": "text",
                 "opening_token": null,
                 "parent_id": 0,
-                "token": Token {
-                  "content": "
-          ",
-                  "end": 10,
-                  "kind": "text",
-                  "start": 5,
-                  "type": "text",
-                },
+                "start": 5,
+                "type": "text",
               },
               ERBNode {
                 "children": [
                   ERBNode {
                     "children": [],
                     "closing_token": null,
+                    "content": "
+            ",
                     "depth": 2,
+                    "end": 30,
                     "id": 5,
+                    "kind": "text",
                     "opening_token": null,
                     "parent_id": 3,
-                    "token": Token {
-                      "content": "
-            ",
-                      "end": 30,
-                      "kind": "text",
-                      "start": 23,
-                      "type": "text",
-                    },
+                    "start": 23,
+                    "type": "text",
                   },
                   ERBNode {
                     "children": [],
@@ -107,8 +103,11 @@ describe("Ast", () => {
                       "start": 55,
                       "type": "erb",
                     },
+                    "content": " render Component.new ",
                     "depth": 2,
+                    "end": 55,
                     "id": 7,
+                    "kind": "statement",
                     "opening_token": Token {
                       "content": "<%=",
                       "end": 33,
@@ -117,29 +116,22 @@ describe("Ast", () => {
                       "type": "erb",
                     },
                     "parent_id": 3,
-                    "token": Token {
-                      "content": " render Component.new ",
-                      "end": 55,
-                      "kind": "statement",
-                      "start": 33,
-                      "type": "erb",
-                    },
+                    "start": 33,
+                    "type": "erb",
                   },
                   ERBNode {
                     "children": [],
                     "closing_token": null,
+                    "content": "
+          ",
                     "depth": 2,
+                    "end": 62,
                     "id": 9,
+                    "kind": "text",
                     "opening_token": null,
                     "parent_id": 3,
-                    "token": Token {
-                      "content": "
-          ",
-                      "end": 62,
-                      "kind": "text",
-                      "start": 57,
-                      "type": "text",
-                    },
+                    "start": 57,
+                    "type": "text",
                   },
                   ERBNode {
                     "children": [],
@@ -150,8 +142,11 @@ describe("Ast", () => {
                       "start": 69,
                       "type": "erb",
                     },
+                    "content": " end ",
                     "depth": 2,
+                    "end": 69,
                     "id": 11,
+                    "kind": "statement",
                     "opening_token": Token {
                       "content": "<%",
                       "end": 64,
@@ -160,13 +155,8 @@ describe("Ast", () => {
                       "type": "erb",
                     },
                     "parent_id": 3,
-                    "token": Token {
-                      "content": " end ",
-                      "end": 69,
-                      "kind": "statement",
-                      "start": 64,
-                      "type": "erb",
-                    },
+                    "start": 64,
+                    "type": "erb",
                   },
                 ],
                 "closing_token": Token {
@@ -176,8 +166,11 @@ describe("Ast", () => {
                   "start": 21,
                   "type": "erb",
                 },
+                "content": " if true ",
                 "depth": 1,
+                "end": 21,
                 "id": 3,
+                "kind": "statement",
                 "opening_token": Token {
                   "content": "<%",
                   "end": 12,
@@ -186,30 +179,23 @@ describe("Ast", () => {
                   "type": "erb",
                 },
                 "parent_id": 0,
-                "token": Token {
-                  "content": " if true ",
-                  "end": 21,
-                  "kind": "statement",
-                  "start": 12,
-                  "type": "erb",
-                },
+                "start": 12,
+                "type": "erb",
               },
               ERBNode {
                 "children": [],
                 "closing_token": null,
-                "depth": 3,
-                "id": 13,
-                "opening_token": null,
-                "parent_id": 0,
-                "token": Token {
-                  "content": "    
+                "content": "    
           
           ",
-                  "end": 85,
-                  "kind": "text",
-                  "start": 71,
-                  "type": "text",
-                },
+                "depth": 3,
+                "end": 85,
+                "id": 13,
+                "kind": "text",
+                "opening_token": null,
+                "parent_id": 0,
+                "start": 71,
+                "type": "text",
               },
             ],
             "closing_token": Token {
@@ -219,25 +205,25 @@ describe("Ast", () => {
               "start": 85,
               "type": "html",
             },
+            "content": "<div>",
             "depth": 0,
+            "end": 5,
             "id": 0,
+            "kind": "open",
             "opening_token": null,
             "parent_id": -1,
-            "token": Token {
-              "content": "<div>",
-              "end": 5,
-              "kind": "open",
-              "start": 0,
-              "type": "html",
-            },
+            "start": 0,
+            "type": "html",
           },
         ],
         "closing_token": null,
         "depth": 0,
+        "end": 90,
         "id": -1,
         "opening_token": null,
         "parent_id": -1,
-        "token": null,
+        "start": 0,
+        "type": "program",
       }
     `);
   });
@@ -246,27 +232,25 @@ describe("Ast", () => {
     const input = `<div class="<%= true ? 'test-true' : 'test-false' %>">Test</div>`;
 
     const tokens = new Lexer(input).lex();
-    const out = new ERBAst(tokens);
+    const out = new ERBAst(tokens, input);
 
     expect(out.program).toMatchInlineSnapshot(`
-      ERBNode {
+      ProgramNode {
         "children": [
           ERBNode {
             "children": [
               ERBNode {
                 "children": [],
                 "closing_token": null,
+                "content": "Test",
                 "depth": 1,
+                "end": 58,
                 "id": 1,
+                "kind": "text",
                 "opening_token": null,
                 "parent_id": 0,
-                "token": Token {
-                  "content": "Test",
-                  "end": 58,
-                  "kind": "text",
-                  "start": 54,
-                  "type": "text",
-                },
+                "start": 54,
+                "type": "text",
               },
             ],
             "closing_token": Token {
@@ -276,25 +260,25 @@ describe("Ast", () => {
               "start": 58,
               "type": "html",
             },
+            "content": "<div class="<%= true ? 'test-true' : 'test-false' %>">",
             "depth": 0,
+            "end": 54,
             "id": 0,
+            "kind": "open",
             "opening_token": null,
             "parent_id": -1,
-            "token": Token {
-              "content": "<div class="<%= true ? 'test-true' : 'test-false' %>">",
-              "end": 54,
-              "kind": "open",
-              "start": 0,
-              "type": "html",
-            },
+            "start": 0,
+            "type": "html",
           },
         ],
         "closing_token": null,
         "depth": 0,
+        "end": 63,
         "id": -1,
         "opening_token": null,
         "parent_id": -1,
-        "token": null,
+        "start": 0,
+        "type": "program",
       }
     `);
   });

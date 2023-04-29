@@ -1,5 +1,5 @@
-import { AstPath, format } from "prettier";
-import { ERBAst, ERBNode, Parser } from "./parser";
+import { AstPath, format, Parser as PrettierParser } from "prettier";
+import { ERBAst, ProgramNode, ERBNode, Parser } from "./parser";
 
 function print(path: AstPath<ERBAst>) {
   let html_string = "";
@@ -8,11 +8,11 @@ function print(path: AstPath<ERBAst>) {
   const ast = path.stack[0];
   const { program } = ast;
 
-  const walk = (node: ERBNode) => {
+  const walk = (node: ProgramNode) => {
     for (const n of node.children) {
-      switch (n.token?.type) {
+      switch (n.type) {
         case "html": {
-          html_string += n.token.content;
+          html_string += n.content;
           break;
         }
         case "erb": {
@@ -23,14 +23,14 @@ function print(path: AstPath<ERBAst>) {
           break;
         }
         case "text": {
-          html_string += n.token.content;
+          html_string += n.content;
         }
       }
 
       walk(n);
 
-      if (n.token?.type === "html") {
-        html_string += n?.closing_token?.content || "";
+      if (n.type === "html") {
+        html_string += n.closing_token?.content || "";
       }
     }
   };
@@ -47,9 +47,11 @@ function print(path: AstPath<ERBAst>) {
 function print_erb(node: ERBNode) {
   const start = node.opening_token?.content;
   const end = node.closing_token?.content;
-  const expression = node.token?.content
-    .replace(/,[\s\n\r]*/g, ", ")
-    .replace(/, /g, ",\n".concat(...Array(node.depth + 2).fill("  ")))
+
+  const expression = node.content
+    // replace whitespace after comma with newline and indent matching depth within tree
+    .replace(/,[\s\n\r]*/g, ",\n".concat(...Array(node.depth + 2).fill("  ")))
+    // trim start and end to normalize
     .trim();
 
   return `${start} ${expression} ${end}`;
@@ -61,9 +63,15 @@ const printers = {
   },
 };
 
-const parser = {
+const parser: PrettierParser = {
   parse: (input: string) => new Parser(input).parse(),
   astFormat: "erb-ast",
+  locStart(node: ERBNode) {
+    return node.start;
+  },
+  locEnd(node: ERBNode) {
+    return node.end;
+  },
 };
 
 module.exports = {

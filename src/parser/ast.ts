@@ -4,19 +4,21 @@ const opening_idens = ["if", "do", "unless"];
 
 export class ERBAst {
   stack: Token[];
-  program: ERBNode;
+  program: ProgramNode;
   node_map: Map<number, ERBNode>;
+  source: string;
 
-  constructor(stack: Token[]) {
+  constructor(stack: Token[], src: string) {
+    this.source = src;
     this.stack = stack;
     this.node_map = new Map();
-    this.program = new ERBNode({
+    this.program = new ProgramNode({
       parent_id: -1,
       id: -1,
-      token: null,
       depth: 0,
+      start: 0,
+      end: src.length - 1,
     });
-    this.node_map.set(-1, this.program);
 
     this.to_ast();
   }
@@ -29,12 +31,12 @@ export class ERBAst {
     return this.node_map.get(id);
   }
 
-  get_parent(node: ERBNode) {
+  get_parent(node: ProgramNode) {
     return this.node_map.get(node.parent_id) || this.program;
   }
 
   private to_ast() {
-    let parent: ERBNode = this.program;
+    let parent: ProgramNode = this.program;
     let depth = 0;
     this.stack.forEach((token, idx) => {
       const node = new ERBNode({
@@ -96,14 +98,46 @@ export class ERBAst {
   }
 }
 
-export class ERBNode {
-  opening_token?: Token | null = null;
-  closing_token?: Token | null = null;
+export class ProgramNode {
   id: number;
   parent_id: number;
-  token: Token | null;
   children: ERBNode[] = [];
   depth: number;
+  start: number;
+  end: number;
+  opening_token?: Token | null = null;
+  closing_token?: Token | null = null;
+  type = "program";
+
+  constructor({
+    parent_id,
+    id,
+    depth,
+    start,
+    end,
+  }: {
+    id: number;
+    parent_id: number;
+    depth: number;
+    start: number;
+    end: number;
+  }) {
+    this.parent_id = parent_id;
+    this.id = id;
+    this.depth = depth;
+    this.start = start;
+    this.end = end;
+  }
+
+  append_child(n: ERBNode) {
+    this.children.push(n);
+  }
+}
+
+export class ERBNode extends ProgramNode {
+  type: Token["type"];
+  content: string;
+  kind: Token["kind"];
 
   constructor({
     parent_id,
@@ -113,16 +147,19 @@ export class ERBNode {
   }: {
     id: number;
     parent_id: number;
-    token: Token | null;
+    token: Token;
     depth: number;
   }) {
-    this.parent_id = parent_id;
-    this.id = id;
-    this.token = token;
-    this.depth = depth;
-  }
+    super({
+      parent_id,
+      id,
+      depth,
+      start: token.start,
+      end: token.end,
+    });
 
-  append_child(n: ERBNode) {
-    this.children.push(n);
+    this.type = token.type;
+    this.content = token.content;
+    this.kind = token.kind;
   }
 }

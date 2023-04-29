@@ -19,34 +19,34 @@ export class Parser {
   }
 
   parse() {
-    this.ast = new ERBAst(this.tokens);
+    this.ast = new ERBAst(this.tokens, this.input);
 
     return this.ast;
   }
+}
 
-  to_erb() {
-    let buffer = "";
-    const callback = (node: ERBNode) => {
-      switch (node.token?.type) {
-        case "erb": {
-          buffer += node.opening_token?.content;
-          buffer += node.token.content;
-          buffer += node.closing_token?.content;
-          break;
-        }
-        default: {
-          buffer += node?.token?.content;
-        }
+export function print_to_erb(ast: ERBAst) {
+  let buffer = "";
+  const callback = (node: ERBNode) => {
+    switch (node.type) {
+      case "erb": {
+        buffer += node.opening_token?.content;
+        buffer += node.content;
+        buffer += node.closing_token?.content;
+        break;
       }
-
-      node.children.forEach(callback);
-
-      if (node.token?.type === "html") {
-        buffer += node?.closing_token?.content || "";
+      default: {
+        buffer += node?.content;
       }
-    };
+    }
 
-    this.ast?.program.children.forEach(callback);
-    return buffer;
-  }
+    node.children.forEach(callback);
+
+    if (node.type === "html") {
+      buffer += node?.closing_token?.content || "";
+    }
+  };
+
+  ast.program.children.forEach(callback);
+  return buffer;
 }
