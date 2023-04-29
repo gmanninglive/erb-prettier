@@ -21,6 +21,25 @@ export enum HTMLKind {
   SELF_CLOSING = "/>",
 }
 
+// void elements should be treated as self closing, as they can't contain children
+const VOID_HTML = [
+  "area",
+  "base",
+  "br",
+  "col",
+  "embed",
+  "hr",
+  "img",
+  "input",
+  "keygen",
+  "link",
+  "meta",
+  "param",
+  "source",
+  "track",
+  "wbr",
+];
+
 export type TokenType = "erb" | "html" | "text";
 
 type Start = number;
@@ -65,7 +84,14 @@ export class Token {
   }
 
   is_self_closing() {
-    return this.content.startsWith(HTMLKind.SELF_CLOSING) || this.is_print();
+    if (this.type === "html") {
+      return (
+        this.content.endsWith(HTMLKind.SELF_CLOSING) ||
+        VOID_HTML.some((s) => this.content.slice(1).startsWith(s))
+      );
+    }
+
+    return this.is_print();
   }
 
   is_print() {

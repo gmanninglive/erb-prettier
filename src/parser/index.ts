@@ -8,13 +8,12 @@ export class Parser {
   input: string;
   tokens: Token[];
   lexer: Lexer;
-  ast: ERBAst;
+  ast?: ERBAst;
 
   constructor(input: string) {
     this.input = input;
     this.lexer = new Lexer(this.input);
     this.tokens = this.lexer.lex();
-    this.ast = this.parse();
   }
 
   parse() {

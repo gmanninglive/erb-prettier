@@ -18,7 +18,7 @@ describe("multiline", () => {
     expect(output).toMatchInlineSnapshot(`
       "<div>
         <%= if true %>
-        <%= render Component.new %>
+          <%= render Component.new %>
         <% end %>
       </div>
       "

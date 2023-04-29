@@ -31,7 +31,7 @@ export class ERBAst {
     return this.node_map.get(id);
   }
 
-  get_parent(node: ProgramNode) {
+  get_parent(node: ProgramNode): ProgramNode | ERBNode {
     return this.node_map.get(node.parent_id) || this.program;
   }
 
@@ -73,19 +73,24 @@ export class ERBAst {
           node.opening_token = this.get_token(idx - 1);
           node.closing_token = this.get_token(idx + 1);
 
-          parent.append_child(node);
+          if (token.content.trim() === ERBKind.END) {
+            // Move up one level
+            parent = this.get_parent(parent);
+            node.parent_id = parent.id;
+            depth--;
 
+            parent.append_child(node);
+            break;
+          }
+
+          parent.append_child(node);
           if (opening_idens.some((s) => token.content.includes(s))) {
             // Move down one level
             parent = node;
             depth++;
           }
 
-          if (token.content.trim() === ERBKind.END) {
-            // Move up one level
-            parent = this.get_parent(parent);
-            depth++;
-          }
+          break;
         }
         default: {
           if (token.type !== "erb" || token.kind === "comment") {

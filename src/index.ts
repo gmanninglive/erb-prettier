@@ -1,7 +1,12 @@
-import { AstPath, format, Parser as PrettierParser } from "prettier";
+import {
+  AstPath,
+  format,
+  ParserOptions,
+  Parser as PrettierParser,
+} from "prettier";
 import { ERBAst, ProgramNode, ERBNode, Parser } from "./parser";
 
-function print(path: AstPath<ERBAst>) {
+function print(path: AstPath<ERBAst>, { tabWidth }: ParserOptions) {
   let html_string = "";
   let erb_nodes: Map<string, ERBNode> = new Map();
 
@@ -39,26 +44,35 @@ function print(path: AstPath<ERBAst>) {
 
   const formatted_html = format(html_string, { parser: "html" });
 
+  function print_erb(node: ERBNode) {
+    const start = node.opening_token?.content;
+    const end = node.closing_token?.content;
+
+    if (node.kind === "comment") {
+      return node.content;
+    }
+
+    const indent = " ".repeat((node.depth + 2) * tabWidth);
+
+    const expression = node.content
+      // replace whitespace after comma with newline and indent matching depth within tree
+      .replace(/,[\s\n\r]*/g, ",\n".concat(indent))
+      // trim start and end to normalize
+      .trim();
+
+    const formatted = `${start} ${expression} ${end}`;
+    const parent = ast.get_parent(node);
+
+    if (parent.type === "erb") {
+      const indent = " ".repeat(tabWidth);
+      return indent + formatted;
+    }
+    return formatted;
+  }
+
   return [...erb_nodes].reduce((prev, [key, node]) => {
     return prev.replace(key, print_erb(node));
   }, formatted_html);
-}
-
-function print_erb(node: ERBNode) {
-  const start = node.opening_token?.content;
-  const end = node.closing_token?.content;
-
-  if (node.kind === "comment") {
-    return node.content;
-  }
-
-  const expression = node.content
-    // replace whitespace after comma with newline and indent matching depth within tree
-    .replace(/,[\s\n\r]*/g, ",\n".concat(...Array(node.depth + 2).fill("  ")))
-    // trim start and end to normalize
-    .trim();
-
-  return `${start} ${expression} ${end}`;
 }
 
 const printers = {
@@ -68,7 +82,7 @@ const printers = {
 };
 
 const parser: PrettierParser = {
-  parse: (input: string) => new Parser(input).ast,
+  parse: (input: string) => new Parser(input).parse(),
   astFormat: "erb-ast",
   locStart(node: ERBNode) {
     return node.start;
