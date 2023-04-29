@@ -282,4 +282,39 @@ describe("Ast", () => {
       }
     `);
   });
+
+  it("parses erb comments", () => {
+    const input =
+      "<%# This is a very long comment, that adds lot of value to the code %>";
+    const tokens = new Lexer(input).lex();
+    const out = new ERBAst(tokens, input);
+
+    expect(out.program).toMatchInlineSnapshot(`
+      ProgramNode {
+        "children": [
+          ERBNode {
+            "children": [],
+            "closing_token": null,
+            "content": "<%# This is a very long comment, that adds lot of value to the code %>",
+            "depth": 0,
+            "end": 70,
+            "id": 0,
+            "kind": "comment",
+            "opening_token": null,
+            "parent_id": -1,
+            "start": 0,
+            "type": "erb",
+          },
+        ],
+        "closing_token": null,
+        "depth": 0,
+        "end": 69,
+        "id": -1,
+        "opening_token": null,
+        "parent_id": -1,
+        "start": 0,
+        "type": "program",
+      }
+    `);
+  });
 });

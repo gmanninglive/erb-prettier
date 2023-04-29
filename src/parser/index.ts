@@ -28,6 +28,11 @@ export class Parser {
 export function print_to_erb(ast: ERBAst) {
   let buffer = "";
   const callback = (node: ERBNode) => {
+    if (node.kind === "comment") {
+      buffer += node.content;
+      return;
+    }
+
     switch (node.type) {
       case "erb": {
         buffer += node.opening_token?.content;

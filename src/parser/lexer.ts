@@ -4,6 +4,7 @@ export enum ERBKind {
   OPEN = "<%",
   OPEN_PRINT = "<%=",
   OPEN_PRINT_ESCAPE = "<%==",
+  OPEN_COMMENT = "<%#",
   CLOSE = "%>",
   CLOSE_TRIMMED = "-%>",
   IF = "if",
@@ -31,7 +32,7 @@ export class Token {
   content: string;
   start: number;
   end: number;
-  kind: "open" | "close" | "self_closing" | "statement" | "text";
+  kind: "open" | "close" | "self_closing" | "statement" | "text" | "comment";
 
   constructor({
     type,
@@ -84,6 +85,9 @@ export class Token {
   }
 
   private get_kind() {
+    if (this.content.startsWith(ERBKind.OPEN_COMMENT)) {
+      return "comment";
+    }
     if (this.is_self_closing()) {
       return "self_closing";
     }
@@ -213,6 +217,20 @@ export class Lexer {
 
   private lex_open() {
     this.start = this.pos;
+
+    // consume any erb comments as a single token
+    if (this.peek_slice(3) === ERBKind.OPEN_COMMENT) {
+      while (this.peek_slice(2) !== ERBKind.CLOSE) {
+        this.advance();
+      }
+
+      this.advance(2);
+      this.emit("erb");
+      this.state = this.lex_text;
+
+      return;
+    }
+
     let span = 2;
 
     while (

@@ -48,6 +48,10 @@ function print_erb(node: ERBNode) {
   const start = node.opening_token?.content;
   const end = node.closing_token?.content;
 
+  if (node.kind === "comment") {
+    return node.content;
+  }
+
   const expression = node.content
     // replace whitespace after comma with newline and indent matching depth within tree
     .replace(/,[\s\n\r]*/g, ",\n".concat(...Array(node.depth + 2).fill("  ")))

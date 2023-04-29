@@ -182,4 +182,22 @@ describe("Lexer", () => {
       ]
     `);
   });
+
+  it("parses erb comments", () => {
+    const input =
+      "<%# This is a very long comment, that adds lot of value to the code %>";
+    const out = new Lexer(input).lex();
+
+    expect(out).toMatchInlineSnapshot(`
+      [
+        Token {
+          "content": "<%# This is a very long comment, that adds lot of value to the code %>",
+          "end": 70,
+          "kind": "comment",
+          "start": 0,
+          "type": "erb",
+        },
+      ]
+    `);
+  });
 });

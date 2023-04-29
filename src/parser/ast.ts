@@ -88,7 +88,7 @@ export class ERBAst {
           }
         }
         default: {
-          if (token.type !== "erb") {
+          if (token.type !== "erb" || token.kind === "comment") {
             parent.append_child(node);
           }
           break;
